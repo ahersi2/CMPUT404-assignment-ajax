@@ -40,6 +40,8 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
                 if (xhr.status==200) {
                     //XXX: parse some JSON from the request!
                     //XXX: Pass the data to the callback!
+                    tempValue= xhr.responseText;
+                    callback(JSON.parse(tempValue));
                 }
             } 
             catch(e) {
@@ -50,6 +52,11 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
     //XXX: POST to a URL
     //XXX: set the mimetype and the accept headers!
     // Remember to use application/json !
+    //once "readystate" changes, the call back function is called, and the data that the request recieves will be sent back to where the function "sendJsonXMLHTTPRequest" was called from
+    xhr.open('POST',url);
+    xhr.setRequestHeader('Accept','application/json')
+    xhr.setRequestHeader('Content-type','application/json');
+    xhr.send(JSON.stringify(objects));
 }
 
 
@@ -136,8 +143,13 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
+    //drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
+    sendJSONXMLHTTPRequest("/entity/"+entity, data, function(){
+        ///Doesnt need to do anything because we only need to update the browser of other clients
+        // we already have the updates in our own browser
+
+    })
 
 }
 
@@ -262,6 +274,14 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
 
 function update() {
     //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
+        sendJSONXMLHTTPRequest("/world", null, function(response){
+        //this is where the polling occurs, response will be the result of constantly checking
+        //the server if there is any new data to update my browswer with
+        console.log("came into update function");
+        world = response;
+        drawNextFrame();
+    })
+
     drawFrame();
 }
 
